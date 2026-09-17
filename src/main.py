@@ -10,40 +10,35 @@ def main():
     game_in_course = True
     while(game_in_course==True and game_reult == 0):
         show_matrix(game_table)
-        posX, posY = readKB()
+        posX, posY = readKB(size)
         bomb_found = check_Matrix(game_table, posX, posY)
-        rest_moves = check_rest(game_table)
+        safe_remain = check_rest(game_table)
         
         if bomb_found:
             game_in_course = False
-            show_all(game_table, posX, posX)
-        if rest_moves == mine_number:
+            show_all(game_table, posX, posY)
+        if safe_remain == 0:
             game_reult = "win"
     
     print("You win the game. All mine_number located") if game_reult == "win" else print("You touch a mine, you lose")
 
 def check_Matrix(game_table, posX, posY):
-    if(game_table[posX][posY].get_value() == 9 ):
-        game_table[posX][posY].Visited()
-        bomb_Found = True
-    else:
-        bomb_Found = False
-    #tiles_Visited(game_table, posX, posY)
-    reveal_Neighbours(game_table, posX, posY)
-    return bomb_Found  
+    tile = game_table[posX][posY]
 
-#def tiles_Visited(game_table, posX, posY):
-    if game_table[posX][posY].get_value() == 9:
-        None
-    else:
-       game_table[posX][posY].Visited()
+    if tile.get_value() == 9:
+        tile.Visited()
+        return True
+
+    reveal_Neighbours(game_table, posX, posY)
+    return False
+
 
 def reveal_Neighbours(game_table, posX, posY):
     if posX < 0 or posX >= len(game_table) or posY < 0 or posY >= len(game_table[0]):
         return
 
     tile = game_table[posX][posY]
-    if tile.is_visited():
+    if tile.is_visited() or tile.get_value() == 9:
         return
 
     tile.Visited()
@@ -114,8 +109,7 @@ def Proximity(game_Tableboard):
 
                     if 0 <= nr < rows and 0 <= nc < cols:
                         if game_Tableboard[nr][nc].get_value() == 9:
-                             bombs_around += 1
-                        
+                            bombs_around += 1
 
             current.set_value(bombs_around)
 
@@ -124,35 +118,56 @@ def Proximity(game_Tableboard):
 def show_matrix(game_table):
     print("Current tableboard: \n ")
     for row in range(len(game_table)):
-        for col in range(len(game_table)):
+        line = []
+        for col in range(len(game_table[row])):
             elem = game_table[row][col]
-            if( not elem.is_visited()):
-                print(" ? ")
+            if not elem.is_visited():
+                line.append("?")
             else:
-                print(F%" {elem.get_value()} ")
-                
+                line.append(str(elem.get_value()))
+        print(" ".join(line))
+
     print("----------------------------------\n")
 
-def show_all(game_table,posX,posY):
+
+# Debug method
+def show_all(game_table, posX, posY):
     for row in range(len(game_table)):
-        for col in range(len(game_table)):
-            elem = game_table[row][col]
-            print("X") if ( row == posX and col == posY ) else print(elem.get_value())
-                
+        values = []
+        for col in range(len(game_table[row])):
+            if row == posX and col == posY:
+                values.append("X")
+            else:
+                values.append(str(game_table[row][col].get_value()))
+        print(" ".join(values))
+
+                   
 def check_rest(game_table):
-    moves = 0
+    safe_remain = 0
     for row in game_table:
-        for col in row:
-            if game_table[row][col].is_visited():
-                moves += 1
+        for tile in row:
+            if not tile.is_visited() and tile.get_value() != 9:
+                safe_remain += 1
     
-    return len(game_table)**2 - moves
+    return safe_remain
 
-def readKB():
-    coords = input("Enter positition to check (Format: X,Y)") 
-    row, col = map(int, coords.split(","))
-    return row, col
-
-
+def readKB(size):
+    correct_input = False
+    while not correct_input:
+        coords = input("Enter position to check (Format: X,Y): ").strip()
+        try:
+            row_str, col_str = coords.split(",")
+            row = int(row_str)
+            col = int(col_str)
+        except (ValueError, TypeError):
+            print("Invalid input. Use X,Y")
+            continue
+        
+        if 0 <= row < size and 0 <= col < size:
+            return row, col
+        
+        print(f"Coordinates out of range. Use values between 0 and {size - 1}.")
+        
+        
 if __name__ == "__main__":
     main()
